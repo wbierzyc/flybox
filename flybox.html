@@ -1,0 +1,2046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Fly Box">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#1a1f16">
+  <meta name="description" content="Fly fishing pattern database and fly box tracker">
+  <title>Fly Box</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪶</text></svg>">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%231a1f16' width='100' height='100'/><text y='.9em' font-size='90' x='5'>🪶</text></svg>">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+  <style>
+    html, body { margin: 0; padding: 0; background: #1a1f16; }
+    body { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect, useCallback, useMemo, useRef } = React;
+
+    // LocalStorage helpers matching the window.storage API shape
+    function localGet(key) {
+      try {
+        const raw = localStorage.getItem(key);
+        if (raw !== null) return { value: raw };
+        return null;
+      } catch { return null; }
+    }
+    function localSet(key, value) {
+      try { localStorage.setItem(key, value); } catch {}
+    }
+
+
+const INITIAL_FLIES = [
+  // ===== SECTION 1: BWO (Baetis) =====
+  // Dry Flies
+  {
+    id: "bwo-parachute",
+    name: "Parachute BWO",
+    hatch: "BWO",
+    style: "Dry Fly",
+    hook: "TMC 100",
+    sizes: "16-22",
+    coreSizes: "18-22",
+    colors: ["Olive body", "Gray/dun hackle"],
+    materials: {
+      Tail: "Microfibbets (olive/gray)",
+      Body: "Olive superfine dubbing",
+      "Wing Post": "White poly yarn",
+      Hackle: "Dun or grizzly"
+    },
+    tyingRefs: [
+      { label: "Tightline Productions", url: "https://www.youtube.com/watch?v=R5tG4l9U3vY" }
+    ],
+    seasons: ["Spring", "Fall"],
+    conditions: ["Clear", "Slow"],
+    notes: "Go-to BWO dry. Fish during hatch windows in riffles and seams."
+  },
+  {
+    id: "bwo-cdc-dry",
+    name: "CDC BWO Dry",
+    hatch: "BWO",
+    style: "Dry Fly",
+    hook: "TMC 100",
+    sizes: "18-22",
+    coreSizes: "18-22",
+    colors: ["Olive", "Dark olive"],
+    materials: {
+      Wing: "Natural CDC",
+      Body: "Olive dubbing",
+      Thread: "Olive 8/0"
+    },
+    tyingRefs: [
+      { label: "Fly Fish Food", url: "https://www.youtube.com/watch?v=ZcM8nK8zZ5g" }
+    ],
+    seasons: ["Spring", "Fall"],
+    conditions: ["Clear", "Slow"],
+    notes: "Low-profile CDC wing sits flush in the film. Great for picky fish."
+  },
+  {
+    id: "bwo-sparkle-dun",
+    name: "BWO Sparkle Dun",
+    hatch: "BWO",
+    style: "Dry Fly",
+    hook: "TMC 100",
+    sizes: "18-22",
+    coreSizes: "18-22",
+    colors: ["Olive body", "Gray shuck"],
+    materials: {
+      Shuck: "Gray Z-Lon or Antron",
+      Body: "Olive dubbing",
+      Wing: "CDC or deer hair"
+    },
+    tyingRefs: [
+      { label: "Charlie Craven", url: "https://charliesflybox.com/blogs/step-by-step-tutorials/sparkle-dun" }
+    ],
+    seasons: ["Spring", "Fall"],
+    conditions: ["Clear", "Slow"],
+    notes: "Trailing shuck imitates a half-emerged dun. Deadly in flat water."
+  },
+  // BWO Emergers
+  {
+    id: "bwo-rs2",
+    name: "RS2",
+    hatch: "BWO",
+    style: "Emerger",
+    hook: "TMC 100",
+    sizes: "18-24",
+    coreSizes: "20-22",
+    colors: ["Olive", "Gray"],
+    materials: {
+      Tail: "Microfibbets/mayfly tails",
+      Body: "Superfine dubbing",
+      Wing: "Sparse gray Zelon or CDC"
+    },
+    tyingRefs: [
+      { label: "Charlie Craven", url: "https://www.youtube.com/watch?v=5_8K_vlszyM" },
+      { label: "Sparkle Wing RS2", url: "https://www.youtube.com/watch?v=qMaL38qTxmY" }
+    ],
+    seasons: ["Spring", "Fall", "Winter"],
+    conditions: ["Clear", "Slow"],
+    notes: "Year-round emerger pattern. Works as a BWO and midge imitation."
+  },
+  {
+    id: "bwo-juju-baetis",
+    name: "Juju Baetis",
+    hatch: "BWO",
+    style: "Emerger",
+    hook: "TMC 2487",
+    sizes: "18-22",
+    coreSizes: "18-20",
+    colors: ["Olive", "Dark olive"],
+    materials: {
+      Tail: "Coq de Leon",
+      Body: "Olive UV thread",
+      Rib: "Fine silver wire",
+      Wingcase: "UV resin"
+    },
+    tyingRefs: [
+      { label: "Lance Egan", url: "https://www.youtube.com/watch?v=82EXE5Hu7a0" },
+      { label: "Charlie Craven", url: "https://www.youtube.com/watch?v=4_Si87I7mIM" }
+    ],
+    seasons: ["Spring", "Fall"],
+    conditions: ["Clear", "Slow", "Off-color"],
+    notes: "UV resin wingcase adds flash and durability. Excellent dropper fly."
+  },
+  {
+    id: "bwo-cdc-emerger",
+    name: "BWO CDC Emerger",
+    hatch: "BWO",
+    style: "Emerger",
+    hook: "TMC 2487",
+    sizes: "18-22",
+    coreSizes: "18-20",
+    colors: ["Olive"],
+    materials: {
+      Wing: "CDC",
+      Body: "Olive dubbing",
+      Rib: "Fine wire (optional)"
+    },
+    tyingRefs: [
+      { label: "Fulling Mill", url: "https://www.youtube.com/watch?v=VD3NETsfwXI" }
+    ],
+    seasons: ["Spring", "Fall"],
+    conditions: ["Clear", "Slow"],
+    notes: "Film-riding emerger. CDC traps air to keep fly in the surface."
+  },
+  // BWO Nymphs - Unweighted
+  {
+    id: "bwo-pt-unweighted",
+    name: "Pheasant Tail (Unweighted)",
+    hatch: "BWO",
+    style: "Nymph",
+    hook: "TMC 3769 / TMC 100",
+    sizes: "14-20",
+    coreSizes: "16-18",
+    colors: ["Natural brown"],
+    materials: {
+      "Tail/Body/Wingcase": "Pheasant tail fibers",
+      Rib: "Copper wire",
+      Thorax: "Peacock herl"
+    },
+    tyingRefs: [
+      { label: "Charlie's Flybox", url: "https://www.youtube.com/watch?v=S5wJd-yMMGQ" }
+    ],
+    seasons: ["Spring", "Summer", "Fall"],
+    conditions: ["Clear", "Slow"],
+    notes: "Unweighted version for shallow water or as a dropper under dries."
+  },
+  {
+    id: "bwo-hares-ear-unweighted",
+    name: "Guide's Choice Hare's Ear (Unweighted)",
+    hatch: "BWO",
+    style: "Nymph",
+    hook: "TMC 3769",
+    sizes: "14-18",
+    coreSizes: "14-16",
+    colors: ["Natural tan/gray"],
+    materials: {
+      "Body/Thorax": "Hare's ear dubbing",
+      Rib: "Gold wire",
+      Other: "Lead wire, Red thread, Pearl Crystal Flash, Large Mirage tinsel, CDL, Peacock herl"
+    },
+    tyingRefs: [
+      { label: "Charlie Craven", url: "https://www.youtube.com/watch?v=8ask9uUpE9w" }
+    ],
+    seasons: ["Spring", "Summer", "Fall"],
+    conditions: ["Clear", "Off-color", "Slow", "Fast"],
+    notes: "Buggy all-purpose nymph. Works for BWO, PMD, and caddis."
+  },
+  {
+    id: "bwo-beadhead-baetis",
+    name: "Bead Head Baetis",
+    hatch: "BWO",
+    style: "Nymph",
+    hook: "TMC 3769",
+    sizes: "14-20",
+    coreSizes: "16-18",
+    colors: ["Natural tan/gray"],
+    materials: {
+      Bead: "Gold bead, 5/64-inch",
+      Thread: "Yellow olive, 8/0 or 70-denier",
+      Tails: "Coq de Leon fibers",
+      Body: "Stripped peacock herl",
+      Wingcase: "Dyed golden-yellow pheasant tail fibers",
+      Thorax: "Olive rabbit-fur dubbing"
+    },
+    tyingRefs: [
+      { label: "Bead Head Baetis", url: "https://www.youtube.com/watch?v=BptQadTE8PU" }
+    ],
+    seasons: ["Spring", "Fall"],
+    conditions: ["Clear", "Off-color", "Fast"],
+    notes: "Weighted baetis nymph for deeper runs."
+  },
+  // BWO Nymphs - Jigged
+  {
+    id: "bwo-flashback-pt-jig",
+    name: "Flashback Pheasant Tail (Jig)",
+    hatch: "BWO",
+    style: "Jig Nymph",
+    hook: "Hanak 45XH Jig MicroBarb",
+    sizes: "10-18",
+    coreSizes: "14-16",
+    colors: ["Natural brown"],
+    materials: {
+      Bead: "Tungsten slotted, 2.0-3.0mm, Gold or copper",
+      "Tail/Body": "Pheasant tail / CDL",
+      Rib: "Copper wire",
+      Wingcase: "Pearl tinsel",
+      Thorax: "Peacock herl",
+      Other: "CDC"
+    },
+    tyingRefs: [
+      { label: "Tactical Fly Fisher", url: "https://www.youtube.com/watch?v=rFA5xn6-0JU" }
+    ],
+    seasons: ["Spring", "Summer", "Fall"],
+    conditions: ["Clear", "Off-color", "Fast"],
+    notes: "Euro/contact nymphing staple. Flashback wingcase adds visibility."
+  },
+  {
+    id: "bwo-hares-ear-jig",
+    name: "Guide's Choice Hare's Ear (Jig)",
+    hatch: "BWO",
+    style: "Jig Nymph",
+    hook: "Hanak 45XH Jig MicroBarb",
+    sizes: "12-18",
+    coreSizes: "14-16",
+    colors: ["Natural tan"],
+    materials: {
+      Bead: "Tungsten slotted (gold or black)",
+      Tail: "Pheasant tail",
+      Body: "Hare's ear dubbing",
+      Rib: "Gold wire",
+      Wingcase: "Turkey tail",
+      Thorax: "Peacock herl"
+    },
+    tyingRefs: [
+      { label: "Charlie Craven (Orvis)", url: "https://howtoflyfish.orvis.com/fly-tying-videos/nymph-flies/674-guide_s_choice_hare_s_ear_nymph" },
+      { label: "YouTube", url: "https://www.youtube.com/watch?v=IxgCS91om3w" }
+    ],
+    seasons: ["Spring", "Summer", "Fall"],
+    conditions: ["Clear", "Off-color", "Fast"],
+    notes: "Jigged version for euro rigs. All-purpose subsurface pattern."
+  },
+  // BWO Perdigons
+  {
+    id: "bwo-perdigon-olive",
+    name: "Olive Perdigon",
+    hatch: "BWO",
+    style: "Perdigon",
+    hook: "Hanak 45XH Jig MicroBarb",
+    sizes: "16-20",
+    coreSizes: "18",
+    colors: ["Olive"],
+    materials: {
+      Bead: "Tungsten slotted, 2.0-3.0mm, Black nickel or gold",
+      Tail: "Coq de Leon",
+      Body: "Olive thread",
+      Rib: "Fine wire",
+      Coating: "UV resin"
+    },
+    tyingRefs: [
+      { label: "Perdigon Nymph", url: "https://www.youtube.com/watch?v=NjtJzsjFEBg" }
+    ],
+    seasons: ["Spring", "Summer", "Fall", "Winter"],
+    conditions: ["Clear", "Fast", "Off-color"],
+    notes: "Sinks fast, stays in the zone. Size 18 is the workhorse."
+  },
+  {
+    id: "bwo-perdigon-dark-olive",
+    name: "Dark Olive / Brown Perdigon",
+    hatch: "BWO",
+    style: "Perdigon",
+    hook: "Hanak 45XH Jig MicroBarb",
+    sizes: "16-20",
+    coreSizes: "18",
+    colors: ["Dark olive", "Brown"],
+    materials: {
+      Bead: "Tungsten slotted, 2.0-3.0mm",
+      Body: "Dark olive or brown thread",
+      Rib: "Copper wire",
+      Coating: "UV resin"
+    },
+    tyingRefs: [
+      { label: "Perdigon Nymph (color swap)", url: "https://www.youtube.com/watch?v=NjtJzsjFEBg" }
+    ],
+    seasons: ["Spring", "Fall", "Winter"],
+    conditions: ["Off-color", "Fast"],
+    notes: "Darker profile for stained water or overcast days."
+  },
+  {
+    id: "bwo-perdigon-black",
+    name: "Black Perdigon",
+    hatch: "BWO",
+    style: "Perdigon",
+    hook: "Hanak 45XH Jig MicroBarb",
+    sizes: "16-20",
+    coreSizes: "18",
+    colors: ["Black"],
+    materials: {
+      Bead: "Tungsten slotted, 2.0-3.0mm",
+      Body: "Black thread",
+      Rib: "Silver wire",
+      Hotspot: "Red or orange thread",
+      Coating: "UV resin"
+    },
+    tyingRefs: [
+      { label: "Devin Olsen", url: "https://www.youtube.com/watch?v=H6M5WQ6W4GI" }
+    ],
+    seasons: ["Spring", "Summer", "Fall", "Winter"],
+    conditions: ["Off-color", "Fast"],
+    notes: "High-contrast attractor perdigon. Hotspot triggers strikes."
+  },
+  {
+    id: "bwo-perdigon-purple",
+    name: "Purple Perdigon",
+    hatch: "BWO",
+    style: "Perdigon",
+    hook: "Hanak 45XH Jig MicroBarb",
+    sizes: "16-20",
+    coreSizes: "18",
+    colors: ["Purple"],
+    materials: {
+      Bead: "Tungsten slotted, 2.0-3.0mm",
+      Body: "Purple thread",
+      Rib: "Fine silver wire",
+      Collar: "UV resin",
+      Coating: "UV resin"
+    },
+    tyingRefs: [
+      { label: "Tactical Fly Fisher", url: "https://www.youtube.com/watch?v=n9QEPjU35fw" }
+    ],
+    seasons: ["Spring", "Summer", "Fall", "Winter"],
+    conditions: ["Off-color", "Fast"],
+    notes: "Competition favorite. Purple is a proven attractor color."
+  },
+  // ===== SECTION 2: PMD =====
+  // PMD Dry Flies
+  {
+    id: "pmd-parachute",
+    name: "Parachute PMD",
+    hatch: "PMD",
+    style: "Dry Fly",
+    hook: "TMC 101",
+    sizes: "14-20",
+    coreSizes: "16-18",
+    colors: ["Pale yellow", "Light olive"],
+    materials: {
+      Tail: "Microfibbets (light dun) / Cahill Champagne Dun",
+      Body: "PMD yellow or light olive superfine dubbing",
+      "Wing Post": "White poly yarn / PMD or Western Caddis Grey EP Trigger Point Fibers",
+      Hackle: "Light dun"
+    },
+    tyingRefs: [
+      { label: "Parachute PMD", url: "https://www.youtube.com/watch?v=clyEFM7IaQI" }
+    ],
+    seasons: ["Summer"],
+    conditions: ["Clear", "Slow"],
+    notes: "Primary PMD dry. Fish in riffles and tailouts during the hatch."
+  },
+  {
+    id: "pmd-cdc-dry",
+    name: "CDC PMD Dry",
+    hatch: "PMD",
+    style: "Dry Fly",
+    hook: "TMC 101",
+    sizes: "14-20",
+    coreSizes: "16-18",
+    colors: ["Pale yellow", "Light olive"],
+    materials: {
+      Wing: "Natural CDC (natural Dun)",
+      Thorax: "PMD dubbing",
+      Thread: "Light yellow or olive",
+      Tail: "Dun mayfly tails"
+    },
+    tyingRefs: [
+      { label: "CDC PMD", url: "https://www.youtube.com/watch?v=J2QVsEYhLUA" }
+    ],
+    seasons: ["Summer"],
+    conditions: ["Clear", "Slow"],
+    notes: "Low-riding CDC version. Great for flat water and spring creeks."
+  },
+  {
+    id: "pmd-sparkle-dun",
+    name: "PMD Sparkle Dun",
+    hatch: "PMD",
+    style: "Dry Fly",
+    hook: "TMC 2487 / TMC 100",
+    sizes: "16-20",
+    coreSizes: "16-18",
+    colors: ["Pale yellow body", "Amber/gray shuck"],
+    materials: {
+      Shuck: "Amber or gray Zelon",
+      Body: "PMD dubbing",
+      Wing: "CDC or deer hair"
+    },
+    tyingRefs: [
+      { label: "PMD Sparkle Dun", url: "https://www.blueribbonflies.com/how-to/fly-tying-videos/dry-fly-tying-videos/pmd-sparkle-dun/" }
+    ],
+    seasons: ["Summer"],
+    conditions: ["Clear", "Slow"],
+    notes: "Trailing shuck pattern for selective risers during PMD hatches."
+  },
+  // PMD Emergers
+  {
+    id: "pmd-cdc-emerger",
+    name: "CDC PMD Emerger",
+    hatch: "PMD",
+    style: "Emerger",
+    hook: "TMC 2487 / 2488",
+    sizes: "14-20",
+    coreSizes: "16-18",
+    colors: ["Pale yellow", "Light olive"],
+    materials: {
+      "Wing 1": "CDC (yellow)",
+      Body: "PMD dubbing",
+      Rib: "Fine wire / dark thread (120D)",
+      Thread: "Yellow 70 denier",
+      Tail: "Zelon",
+      "Wing 2": "Bleached cow elk",
+      Thorax: "Orange dubbing",
+      Head: "CDC"
+    },
+    tyingRefs: [
+      { label: "PMD CDC Emerger", url: "https://www.youtube.com/watch?v=-gwjXVC4c14" }
+    ],
+    seasons: ["Summer"],
+    conditions: ["Clear", "Slow"],
+    notes: "Complex emerger with multiple wing elements. Very effective in the film."
+  },
+  {
+    id: "pmd-splitback-emerger",
+    name: "Splitback PMD Emerger",
+    hatch: "PMD",
+    style: "Emerger",
+    hook: "TMC 3761 / 2487",
+    sizes: "16-20",
+    coreSizes: "16-18",
+    colors: ["Pale yellow", "Light olive"],
+    materials: {
+      "Tail/Shuck": "Amber Z-Lon / Mallard flank",
+      Body: "PMD dubbing",
+      Wingcase: "Thin Skin or turkey tail",
+      Thorax: "Slightly darker dubbing",
+      Casing: "Black goose biots & yellow razor foam",
+      Legs: "Amber Z-Lon / Mallard flank",
+      Bead: "Copper/gold (optional)"
+    },
+    tyingRefs: [
+      { label: "Charlie Craven", url: "https://www.youtube.com/watch?v=42TopAPGOmA" }
+    ],
+    seasons: ["Summer"],
+    conditions: ["Clear", "Slow", "Off-color"],
+    notes: "Craven's splitback design imitates the emerging nymph."
+  },
+  {
+    id: "pmd-barr-emerger",
+    name: "Barr Emerger (PMD)",
+    hatch: "PMD",
+    style: "Emerger",
+    hook: "TMC 2487",
+    sizes: "16-20",
+    coreSizes: "16-18",
+    colors: ["Pale yellow", "Light olive"],
+    materials: {
+      Shuck: "Z-Lon",
+      Body: "PMD dubbing",
+      Wing: "CDC",
+      Tail: "Hackle Fibers",
+      Thorax: "Gray dubbing"
+    },
+    tyingRefs: [
+      { label: "Charlie Craven", url: "https://www.youtube.com/watch?v=S-PPXMMY7bY" }
+    ],
+    seasons: ["Summer"],
+    conditions: ["Clear", "Slow"],
+    notes: "John Barr's emerger design. Simple and effective."
+  },
+  // PMD Soft Hackle
+  {
+    id: "pmd-soft-hackle",
+    name: "PMD Soft Hackle",
+    hatch: "PMD",
+    style: "Wet Fly",
+    hook: "TMC 2487",
+    sizes: "14-18",
+    coreSizes: "14-16",
+    colors: ["Yellow", "Light olive"],
+    materials: {
+      Thread: "Semperfli Classic Waxed 12/0 Primrose",
+      Tail: "Yellow Dyed Pheasant Tail",
+      Body: "Semperfli Perfect Quills Clear Medium",
+      Thorax: "Semperfli Kapok Danica",
+      Hackle: "Moonlit Quail Skin Natural Brown Variant"
+    },
+    tyingRefs: [
+      { label: "Soft Hackle PMD", url: "https://www.youtube.com/watch?v=obhHX-3QSJs" }
+    ],
+    seasons: ["Summer"],
+    conditions: ["Clear", "Off-color", "Fast"],
+    notes: "Swing through runs during PMD activity. Deadly on the swing."
+  },
+  // PMD Nymphs
+  {
+    id: "pmd-pheasant-tail",
+    name: "PMD Pheasant Tail",
+    hatch: "PMD",
+    style: "Nymph",
+    hook: "TMC 3769",
+    sizes: "14-20",
+    coreSizes: "16-18",
+    colors: ["Natural brown", "Light olive"],
+    materials: {
+      "Tail/Body/Wingcase": "Pheasant tail fibers",
+      Rib: "Copper wire",
+      Thorax: "Peacock herl"
+    },
+    tyingRefs: [
+      { label: "Davie McPhail", url: "https://www.youtube.com/watch?v=0A6Z0E9BqQ4" }
+    ],
+    seasons: ["Summer"],
+    conditions: ["Clear", "Slow", "Fast"],
+    notes: "Classic pheasant tail sized for PMD nymphs."
+  },
+  {
+    id: "pmd-beadhead-nymph",
+    name: "Beadhead PMD Nymph",
+    hatch: "PMD",
+    style: "Nymph",
+    hook: "TMC 3769",
+    sizes: "14-18",
+    coreSizes: "14-16",
+    colors: ["Natural brown"],
+    materials: {
+      Bead: "Brass or tungsten, 2.0-3.0mm, Gold",
+      "Tail/Body/Wingcase": "Pheasant tail fibers",
+      Rib: "Copper wire",
+      Thorax: "Peacock herl"
+    },
+    tyingRefs: [
+      { label: "Orvis", url: "https://howtoflyfish.orvis.com/fly-tying-videos/nymph-flies/667-beadhead-pheasant-tail" }
+    ],
+    seasons: ["Summer"],
+    conditions: ["Clear", "Off-color", "Fast"],
+    notes: "Weighted version for deeper runs during PMD season."
+  },
+  // PMD Perdigons
+  {
+    id: "pmd-perdigon-tan",
+    name: "Tan Perdigon",
+    hatch: "PMD",
+    style: "Perdigon",
+    hook: "Hanak 45XH Jig MicroBarb",
+    sizes: "16-20",
+    coreSizes: "16-18",
+    colors: ["Tan"],
+    materials: {
+      Bead: "Tungsten slotted, 2.3-3.0mm, Gold or black nickel",
+      Body: "Tan thread",
+      Rib: "Fine gold wire",
+      Coating: "UV resin"
+    },
+    tyingRefs: [
+      { label: "Perdigon (color swap)", url: "https://www.youtube.com/watch?v=NjtJzsjFEBg" }
+    ],
+    seasons: ["Summer"],
+    conditions: ["Clear", "Fast"],
+    notes: "PMD-colored perdigon for fast euro nymphing."
+  },
+  {
+    id: "pmd-perdigon-yellow",
+    name: "Yellow Perdigon",
+    hatch: "PMD",
+    style: "Perdigon",
+    hook: "Hanak 45XH Jig MicroBarb",
+    sizes: "16-20",
+    coreSizes: "16-18",
+    colors: ["Yellow"],
+    materials: {
+      Bead: "Tungsten slotted, 2.3-3.0mm",
+      Body: "Yellow thread",
+      Rib: "Fine silver wire",
+      Coating: "UV resin"
+    },
+    tyingRefs: [
+      { label: "Perdigon (color swap)", url: "https://www.youtube.com/watch?v=NjtJzsjFEBg" }
+    ],
+    seasons: ["Summer"],
+    conditions: ["Clear", "Fast"],
+    notes: "Bright PMD perdigon. Good in slightly off-color water."
+  },
+  {
+    id: "pmd-perdigon-olive-hotspot",
+    name: "Olive Perdigon w/ Orange Hotspot",
+    hatch: "PMD",
+    style: "Perdigon",
+    hook: "Hanak 45XH Jig MicroBarb",
+    sizes: "16-20",
+    coreSizes: "16-18",
+    colors: ["Olive"],
+    materials: {
+      Bead: "Tungsten slotted, 2.3-3.0mm",
+      Body: "Olive thread",
+      Rib: "Fine wire",
+      Hotspot: "Orange thread behind bead",
+      Coating: "UV resin"
+    },
+    tyingRefs: [
+      { label: "Hotspot Perdigon", url: "https://www.youtube.com/watch?v=y3uMBiOvi8M" }
+    ],
+    seasons: ["Summer"],
+    conditions: ["Off-color", "Fast"],
+    notes: "Orange hotspot adds an attractor element to the olive body."
+  },
+  {
+    id: "pmd-tnt",
+    name: "TNT PMD",
+    hatch: "PMD",
+    style: "Perdigon",
+    hook: "Hanak 45XH Jig MicroBarb",
+    sizes: "16-20",
+    coreSizes: "16-18",
+    colors: ["Yellow", "Olive"],
+    materials: {
+      Tag: "Yellow Semperfli poly yarn",
+      Tail: "Whiting Coq de Leon dark pardo",
+      Rib: "Ultra wire, Sculpin olive, small",
+      "Thorax Dubbing": "Bright yellow Hairline fur dubbing",
+      Legs: "Pheasant tail fibers",
+      Hotspot: "Ultra thread 70 denier Fl. Fire orange"
+    },
+    tyingRefs: [
+      { label: "TNT PMD", url: "https://www.youtube.com/watch?v=xPptPTH1X-Q" }
+    ],
+    seasons: ["Summer"],
+    conditions: ["Clear", "Off-color", "Fast"],
+    notes: "Competition pattern with great visibility and action."
+  },
+  // ===== SECTION 3: MIDGES =====
+  // Midge Dry Flies
+  {
+    id: "midge-griffiths-gnat",
+    name: "Griffith's Gnat",
+    hatch: "Midge",
+    style: "Dry Fly",
+    hook: "TMC 100",
+    sizes: "14-24",
+    coreSizes: "20-24",
+    colors: ["Black body", "Grizzly hackle"],
+    materials: {
+      Body: "Peacock herl",
+      Hackle: "Grizzly rooster hackle"
+    },
+    tyingRefs: [
+      { label: "Tightline Productions", url: "https://www.youtube.com/watch?v=HFOTQU9UGWQ" }
+    ],
+    seasons: ["Winter", "Spring", "Fall"],
+    conditions: ["Clear", "Slow"],
+    notes: "Classic midge cluster pattern. Fish during winter midge hatches."
+  },
+  {
+    id: "midge-cdc-dry",
+    name: "CDC Midge Dry",
+    hatch: "Midge",
+    style: "Dry Fly",
+    hook: "TMC 100 / TMC 2487 / 2488",
+    sizes: "20-26",
+    coreSizes: "22-24",
+    colors: ["Black", "Gray"],
+    materials: {
+      Wing: "CDC",
+      Body: "Thread (black or gray)",
+      Thread: "Waxed 12/0",
+      Other: "Razor foam (gray/tan)"
+    },
+    tyingRefs: [
+      { label: "Fly Fish Food", url: "https://www.youtube.com/watch?v=02EE45MXdPg" }
+    ],
+    seasons: ["Winter", "Spring"],
+    conditions: ["Clear", "Slow"],
+    notes: "Tiny CDC midge adult. Essential for tailwater fishing."
+  },
+  // Midge Emergers / Wet Flies
+  {
+    id: "midge-wd40",
+    name: "WD-40",
+    hatch: "Midge",
+    style: "Emerger",
+    hook: "TMC 2487",
+    sizes: "18-24",
+    coreSizes: "20-22",
+    colors: ["Gray", "Olive", "Tan"],
+    materials: {
+      Tail: "Zelon / mallard flank",
+      Body: "Thread or dubbing",
+      "Wing/Casing": "Zelon / mallard flank"
+    },
+    tyingRefs: [
+      { label: "Charlie Craven", url: "https://www.youtube.com/watch?v=8Q2nT1sF9nE" }
+    ],
+    seasons: ["Winter", "Spring", "Fall"],
+    conditions: ["Clear", "Slow"],
+    notes: "Versatile midge/mayfly emerger. Works year-round on tailwaters."
+  },
+  {
+    id: "midge-mole-fly",
+    name: "Mole Fly",
+    hatch: "Midge",
+    style: "Emerger",
+    hook: "TMC 2487",
+    sizes: "20-24",
+    coreSizes: "20-22",
+    colors: ["Gray", "Brown"],
+    materials: {
+      Body: "Mole fur dubbing",
+      Rib: "Fine wire",
+      Wing: "CDC & white flouro fiber/sparkle"
+    },
+    tyingRefs: [
+      { label: "Charlie Craven", url: "https://www.youtube.com/watch?v=Xo3oxHBLz4c" }
+    ],
+    seasons: ["Winter", "Spring"],
+    conditions: ["Clear", "Slow"],
+    notes: "Film-riding midge emerger. Mole fur gives a natural buggy look."
+  },
+  {
+    id: "midge-soft-hackle",
+    name: "Midge Soft Hackle",
+    hatch: "Midge",
+    style: "Wet Fly",
+    hook: "TMC 3769 / TMC 101",
+    sizes: "18-24",
+    coreSizes: "20-22",
+    colors: ["Black", "Olive", "Blue Dun"],
+    materials: {
+      Body: "Thread or fine dubbing",
+      Hackle: "Partridge or hen / Whiting 4B Hen Cape Grizzly"
+    },
+    tyingRefs: [
+      { label: "Fly Fish Food", url: "https://www.youtube.com/watch?v=lBTN5XAR9Ws" }
+    ],
+    seasons: ["Winter", "Spring"],
+    conditions: ["Clear", "Slow", "Off-color"],
+    notes: "Wet fly swing or dead drift in the film during midge activity."
+  },
+  // Midge Nymphs / Larvae
+  {
+    id: "midge-zebra",
+    name: "Zebra Midge",
+    hatch: "Midge",
+    style: "Nymph",
+    hook: "TMC 3769",
+    sizes: "18-24",
+    coreSizes: "20-22",
+    colors: ["Black/silver", "Red/silver", "Olive/silver"],
+    materials: {
+      Body: "Thread",
+      Rib: "Silver wire"
+    },
+    tyingRefs: [
+      { label: "Tightline Productions", url: "https://www.youtube.com/watch?v=QFAlXG_78Z4" }
+    ],
+    seasons: ["Winter", "Spring", "Fall"],
+    conditions: ["Clear", "Slow"],
+    notes: "Simple and deadly midge larva. Year-round tailwater essential."
+  },
+  {
+    id: "midge-beadhead-zebra",
+    name: "Beadhead Zebra Midge",
+    hatch: "Midge",
+    style: "Nymph",
+    hook: "TMC 3769",
+    sizes: "18-22",
+    coreSizes: "20-22",
+    colors: ["Black/silver", "Red/silver"],
+    materials: {
+      Bead: "Brass or tungsten, 1.5-2.0mm, Silver or black nickel",
+      Body: "Thread",
+      Rib: "Silver wire"
+    },
+    tyingRefs: [
+      { label: "Orvis", url: "https://www.youtube.com/watch?v=J8xZ2M6Xw6Q" }
+    ],
+    seasons: ["Winter", "Spring", "Fall"],
+    conditions: ["Clear", "Slow", "Fast"],
+    notes: "Weighted zebra midge. Sinks faster for deeper presentations."
+  },
+  {
+    id: "midge-black-beauty",
+    name: "Black Beauty",
+    hatch: "Midge",
+    style: "Nymph",
+    hook: "TMC 2487",
+    sizes: "18-22",
+    coreSizes: "20-22",
+    colors: ["Black", "Purple"],
+    materials: {
+      Bead: "2.0-2.3mm, Black nickel",
+      Body: "Black thread",
+      Rib: "Fine silver wire",
+      Head: "Dubbing"
+    },
+    tyingRefs: [
+      { label: "Charlie Craven", url: "https://www.youtube.com/watch?v=ZNer8jIRnKM" }
+    ],
+    seasons: ["Winter", "Spring"],
+    conditions: ["Clear", "Slow"],
+    notes: "Charlie Craven's midge pattern. Colorado tailwater classic."
+  },
+  {
+    id: "midge-disco",
+    name: "Disco Midge",
+    hatch: "Midge",
+    style: "Nymph",
+    hook: "TMC 2487",
+    sizes: "18-22",
+    coreSizes: "20-22",
+    colors: ["Black", "Red", "Pink"],
+    materials: {
+      Bead: "Glass bead",
+      Body: "Flashabou",
+      Rib: "Ultra wire or tinsel (optional)",
+      Collar: "Peacock herl"
+    },
+    tyingRefs: [
+      { label: "Tightline Video", url: "https://www.youtube.com/watch?v=Wu7-Jq_iSlg" }
+    ],
+    seasons: ["Winter", "Spring"],
+    conditions: ["Clear", "Slow", "Off-color"],
+    notes: "Flash-heavy midge larva. The glass bead adds unique refraction."
+  },
+  {
+    id: "midge-gooey",
+    name: "Gooey Midge",
+    hatch: "Midge",
+    style: "Nymph",
+    hook: "TMC 3769",
+    sizes: "18-22",
+    coreSizes: "20-22",
+    colors: ["Olive", "Tan"],
+    materials: {
+      Body: "Spanflex",
+      Rib: "Wire (optional)",
+      "Case/Head": "Different color spanflex"
+    },
+    tyingRefs: [
+      { label: "Tactical Fly Fisher", url: "https://www.youtube.com/watch?v=HsaBHO4AFOg" }
+    ],
+    seasons: ["Winter", "Spring"],
+    conditions: ["Clear", "Slow"],
+    notes: "Translucent spanflex body mimics a midge larva perfectly."
+  },
+  {
+    id: "midge-top-secret",
+    name: "Top Secret Midge",
+    hatch: "Midge",
+    style: "Nymph",
+    hook: "TMC 2487 / 2488",
+    sizes: "18-24",
+    coreSizes: "20-22",
+    colors: ["Olive", "Brown", "Purple", "Blue"],
+    materials: {
+      Body: "Dark thread",
+      Rib: "White thread",
+      "Head/Thorax": "Fine dubbing"
+    },
+    tyingRefs: [
+      { label: "Top Secret Midge", url: "https://www.youtube.com/watch?v=0wSZU1iBkQs" }
+    ],
+    seasons: ["Winter", "Spring"],
+    conditions: ["Clear", "Slow"],
+    notes: "Segmented midge larva. The contrasting rib creates a realistic look."
+  },
+  // ===== SECTION 4: STONEFLIES =====
+  // Stonefly Nymphs - Standard
+  {
+    id: "stone-pats-rubber-legs",
+    name: "Pat's Rubber Legs (Classic)",
+    hatch: "Stonefly",
+    style: "Nymph",
+    hook: "TMC 5262 / TMC 200R",
+    sizes: "6-16",
+    coreSizes: "8-10",
+    colors: ["Black", "Brown", "Coffee/black"],
+    materials: {
+      Tail: "Black/brown rubber legs",
+      Body: "Chenille or dubbing",
+      Rib: "Copper or gold wire",
+      Legs: "Round rubber legs",
+      Other: "Lead wire, Bead (optional)"
+    },
+    tyingRefs: [
+      { label: "Tightline Productions", url: "https://www.youtube.com/watch?v=QUK-if6brp0" }
+    ],
+    seasons: ["Spring", "Summer", "Fall", "Winter"],
+    conditions: ["Off-color", "Fast"],
+    notes: "Colorado staple. Works in every freestone river year-round."
+  },
+  {
+    id: "stone-wired-stonefly",
+    name: "Wired Stonefly (Beadhead)",
+    hatch: "Stonefly",
+    style: "Nymph",
+    hook: "TMC 5262 / TMC 200R",
+    sizes: "8-18",
+    coreSizes: "10-14",
+    colors: ["Brown", "Black"],
+    materials: {
+      "Tail/Body": "Black or brown antron",
+      Rib: "Black and copper wire",
+      Biots: "Black goose biots",
+      Thorax: "Dubbing",
+      Casing: "Black FINO skin",
+      Bead: "Gold bead",
+      Other: "Lead wire"
+    },
+    tyingRefs: [
+      { label: "Wired Stonefly", url: "https://www.youtube.com/watch?v=_y5h-b6tal0" }
+    ],
+    seasons: ["Spring", "Summer"],
+    conditions: ["Off-color", "Fast"],
+    notes: "Heavy stonefly nymph for fast, deep runs."
+  },
+  // Stonefly Nymphs - Jigged
+  {
+    id: "stone-jigged-pats",
+    name: "Jigged Pat's Rubber Legs",
+    hatch: "Stonefly",
+    style: "Jig Nymph",
+    hook: "Hanak 45XH Jig MicroBarb",
+    sizes: "8-14",
+    coreSizes: "10-12",
+    colors: ["Brown/black"],
+    materials: {
+      Bead: "Tungsten slotted, 3.0-4.0mm, Black nickel or gold",
+      Tail: "Rubber legs",
+      Body: "Brown/black chenille",
+      Rib: "Copper wire",
+      Legs: "Rubber legs"
+    },
+    tyingRefs: [
+      { label: "Fly Fish Food", url: "https://www.youtube.com/watch?v=4m7k8pP8hXQ" }
+    ],
+    seasons: ["Spring", "Summer", "Fall", "Winter"],
+    conditions: ["Off-color", "Fast"],
+    notes: "Euro version of Pat's. Colorado staple under indicator or tight-line."
+  },
+  {
+    id: "stone-jigged-biot",
+    name: "Jigged Biot Stone",
+    hatch: "Stonefly",
+    style: "Jig Nymph",
+    hook: "Hanak 45XH Jig MicroBarb",
+    sizes: "8-14",
+    coreSizes: "10-12",
+    colors: ["Brown"],
+    materials: {
+      Bead: "Tungsten slotted, 3.0-4.0mm",
+      Antenna: "Hareline Stripped Goose Biots, Brown",
+      Weight: "Lead Wire 0.015",
+      Tail: "Goose Biots, Brown",
+      Body: "Turkey Biot Quills, Brown",
+      Ribbing: "UTC Ultra Wire, Brassie Brown",
+      Legs: "Natural Hungarian Partridge",
+      "Thorax Underbody": "Ice Dub, Pheasant Tail",
+      Backing: "Medallion Sheeting, Buggy Brown (or black Fino Skin)"
+    },
+    tyingRefs: [
+      { label: "AvidMax", url: "https://blog.avidmax.com/2018/05/01/how-to-tie-a-jigged-biot-stone-fly-tying-video/" }
+    ],
+    seasons: ["Spring", "Summer"],
+    conditions: ["Clear", "Off-color", "Fast"],
+    notes: "Detailed biot-body stonefly. Realistic segmentation."
+  },
+  {
+    id: "stone-jigged-20-incher",
+    name: "Jigged 20-Incher Stone",
+    hatch: "Stonefly",
+    style: "Jig Nymph",
+    hook: "Hanak 45XH Jig MicroBarb",
+    sizes: "8-14",
+    coreSizes: "10-12",
+    colors: ["Brown", "Black"],
+    materials: {
+      Bead: "Tungsten slotted, 3.0-4.0mm",
+      Body: "Lead-free wire underbody + dubbing/peacock herl",
+      Rib: "Heavy wire",
+      Legs: "Partridge feathers",
+      Wingcase: "Turkey tail / thin skin",
+      Thorax: "Dubbing",
+      Tail: "Biots / CDL / Pheasant tail"
+    },
+    tyingRefs: [
+      { label: "Tightline Productions", url: "https://www.flyfishfood.com/blogs/nymph-tutorials/20-incher-stone" }
+    ],
+    seasons: ["Spring", "Summer"],
+    conditions: ["Off-color", "Fast"],
+    notes: "Heavy attractor stonefly. Named for targeting big fish."
+  },
+  // Small / Winter / Golden Stones
+  {
+    id: "stone-little-black",
+    name: "Little Black Stonefly Nymph",
+    hatch: "Stonefly",
+    style: "Nymph",
+    hook: "TMC 3769",
+    sizes: "14-18",
+    coreSizes: "16-18",
+    colors: ["Black", "Dark brown"],
+    materials: {
+      "Antennae/Legs": "Centipede legs, mini, black",
+      Abdomen: "Stretch Tubing, micro, black",
+      Wingcase: "6-8 natural pheasant-tail fibers",
+      Thorax: "Dark hare's mask"
+    },
+    tyingRefs: [
+      { label: "Tightline Productions", url: "https://www.youtube.com/watch?v=i9EqQliR4C0" }
+    ],
+    seasons: ["Winter", "Spring"],
+    conditions: ["Clear", "Slow", "Fast"],
+    notes: "Early season pattern. Fish during winter stonefly emergence."
+  },
+  {
+    id: "stone-golden-nymph",
+    name: "Golden Stonefly Nymph",
+    hatch: "Stonefly",
+    style: "Nymph",
+    hook: "TMC 3769",
+    sizes: "12-18",
+    coreSizes: "12-14",
+    colors: ["Black", "Dark brown"],
+    materials: {
+      Bead: "Gold bead",
+      Weight: "Lead wire",
+      Tail: "Goose biots",
+      Wire: "Gold wire",
+      Casing: "Medallion Sheeting / Fino skin",
+      Dubbing: "Yellow dubbing",
+      Legs: "Rubber legs"
+    },
+    tyingRefs: [
+      { label: "Golden Stonefly", url: "https://www.youtube.com/watch?v=E0dRwO8SHMI" }
+    ],
+    seasons: ["Spring", "Summer"],
+    conditions: ["Off-color", "Fast"],
+    notes: "Imitates Calineuria/Hesperoperla golden stone nymphs."
+  },
+  // Stonefly Dry Flies
+  {
+    id: "stone-stimulator",
+    name: "Stimulator (Stonefly Variant)",
+    hatch: "Stonefly",
+    style: "Dry Fly",
+    hook: "TMC 100",
+    sizes: "6-12",
+    coreSizes: "8-10",
+    colors: ["Yellow", "Orange", "Golden stone"],
+    materials: {
+      Tail: "Elk hair",
+      Body: "Dubbed with wire rib",
+      Wing: "Elk hair",
+      Hackle: "Brown"
+    },
+    tyingRefs: [
+      { label: "Tightline Productions", url: "https://www.youtube.com/watch?v=1PzP1B2zG5M" }
+    ],
+    seasons: ["Summer"],
+    conditions: ["Fast", "Off-color"],
+    notes: "Attractor/searching dry. Works as stonefly and hopper imitation."
+  },
+  {
+    id: "stone-clarks",
+    name: "Clark's Stonefly",
+    hatch: "Stonefly",
+    style: "Dry Fly",
+    hook: "TMC 100",
+    sizes: "6-10",
+    coreSizes: "8-10",
+    colors: ["Yellow", "Tan"],
+    materials: {
+      Body: "Dubbed yellow/tan",
+      Wing: "Deer hair",
+      Hackle: "Brown"
+    },
+    tyingRefs: [
+      { label: "Fly Fish Food", url: "https://www.youtube.com/watch?v=8uG7X9k8n5A" }
+    ],
+    seasons: ["Summer"],
+    conditions: ["Fast", "Off-color"],
+    notes: "Foam-body stonefly adult. High floater for rough water."
+  },
+  {
+    id: "stone-sofa-pillow",
+    name: "Improved Sofa Pillow",
+    hatch: "Stonefly",
+    style: "Dry Fly",
+    hook: "TMC 100",
+    sizes: "6-10",
+    coreSizes: "6-8",
+    colors: ["Golden stone"],
+    materials: {
+      Body: "Yellow dubbing",
+      Rib: "Gold wire",
+      Wing: "Elk hair",
+      Hackle: "Brown"
+    },
+    tyingRefs: [
+      { label: "Tightline Productions", url: "https://www.youtube.com/watch?v=5Kz3V9M8YpE" }
+    ],
+    seasons: ["Summer"],
+    conditions: ["Fast", "Off-color"],
+    notes: "Big water stonefly pattern. Great for salmonfly hatches."
+  },
+  // Attractor Stone
+  {
+    id: "stone-prince",
+    name: "Rubber Leg Prince Stone",
+    hatch: "Stonefly",
+    style: "Nymph",
+    hook: "TMC 5262",
+    sizes: "8-12",
+    coreSizes: "10-12",
+    colors: ["Peacock"],
+    materials: {
+      Body: "Peacock herl",
+      Wings: "White biots",
+      Legs: "Rubber legs"
+    },
+    tyingRefs: [
+      { label: "Fly Fish Food", url: "https://www.youtube.com/watch?v=qT7XzH8M5A4" }
+    ],
+    seasons: ["Spring", "Summer", "Fall"],
+    conditions: ["Off-color", "Fast"],
+    notes: "Attractor nymph. Imitates nothing specific but catches everything."
+  }
+];
+
+const ALL_HATCHES = ["BWO", "PMD", "Midge", "Stonefly"];
+const ALL_STYLES = ["Dry Fly", "Emerger", "Wet Fly", "Nymph", "Jig Nymph", "Perdigon"];
+const ALL_SEASONS = ["Spring", "Summer", "Fall", "Winter"];
+const ALL_CONDITIONS = ["Clear", "Off-color", "Slow", "Fast"];
+
+const STYLE_ICONS = {
+  "Dry Fly": "D",
+  "Emerger": "E",
+  "Wet Fly": "W",
+  "Nymph": "N",
+  "Jig Nymph": "J",
+  "Perdigon": "P"
+};
+
+const HATCH_COLORS = {
+  "BWO": { bg: "#2d4a3e", accent: "#7fb069", text: "#c8e6c0" },
+  "PMD": { bg: "#4a3d2d", accent: "#d4a44c", text: "#f0ddb8" },
+  "Midge": { bg: "#2d3a4a", accent: "#6b8fbd", text: "#b8d0f0" },
+  "Stonefly": { bg: "#4a2d2d", accent: "#c47a5a", text: "#f0c8b8" }
+};
+
+const STORAGE_KEY = "fly-db-v2";
+const BOX_STORAGE_KEY = "fly-box-v1";
+
+function FlyDatabase() {
+  const [flies, setFlies] = useState([]);
+  const [boxData, setBoxData] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState({ hatch: [], style: [], season: [], condition: [] });
+  const [boxFilter, setBoxFilter] = useState("all"); // "all", "inBox", "needToTie"
+  const [searchTerm, setSearchTerm] = useState("");
+  const [expandedFly, setExpandedFly] = useState(null);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [editingFly, setEditingFly] = useState(null);
+  const [viewMode, setViewMode] = useState("grid");
+  const [sortBy, setSortBy] = useState("hatch");
+  const scrollRef = useRef(null);
+
+  // Load data from persistent storage
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const result = localGet(STORAGE_KEY);
+        if (result && result.value) {
+          setFlies(JSON.parse(result.value));
+        } else {
+          setFlies(INITIAL_FLIES);
+          localSet(STORAGE_KEY, JSON.stringify(INITIAL_FLIES));
+        }
+      } catch (e) {
+        setFlies(INITIAL_FLIES);
+        try { localSet(STORAGE_KEY, JSON.stringify(INITIAL_FLIES)); } catch {}
+      }
+      try {
+        const boxResult = localGet(BOX_STORAGE_KEY);
+        if (boxResult && boxResult.value) {
+          setBoxData(JSON.parse(boxResult.value));
+        }
+      } catch {}
+      setLoading(false);
+    }
+    loadData();
+  }, []);
+
+  // Save flies to storage
+  const saveFlies = useCallback(async (updated) => {
+    setFlies(updated);
+    try { localSet(STORAGE_KEY, JSON.stringify(updated)); } catch {}
+  }, []);
+
+  // Save box data to storage
+  const saveBoxData = useCallback(async (updated) => {
+    setBoxData(updated);
+    try { localSet(BOX_STORAGE_KEY, JSON.stringify(updated)); } catch {}
+  }, []);
+
+  // Toggle fly in/out of box
+  const toggleInBox = useCallback(async (flyId) => {
+    const current = boxData[flyId];
+    let updated;
+    if (current?.inBox) {
+      updated = { ...boxData };
+      delete updated[flyId];
+    } else {
+      updated = { ...boxData, [flyId]: { inBox: true, qty: 1, sizes: [] } };
+    }
+    await saveBoxData(updated);
+  }, [boxData, saveBoxData]);
+
+  // Update box details for a fly
+  const updateBoxDetails = useCallback(async (flyId, details) => {
+    const updated = { ...boxData, [flyId]: { ...boxData[flyId], ...details } };
+    await saveBoxData(updated);
+  }, [boxData, saveBoxData]);
+
+  // Box stats
+  const boxStats = useMemo(() => {
+    const inBox = Object.values(boxData).filter(b => b.inBox).length;
+    const totalQty = Object.values(boxData).reduce((sum, b) => sum + (b.qty || 0), 0);
+    return { inBox, totalQty, total: flies.length };
+  }, [boxData, flies]);
+
+  // Filtering
+  const filteredFlies = useMemo(() => {
+    let result = flies;
+    if (filters.hatch.length) result = result.filter(f => filters.hatch.includes(f.hatch));
+    if (filters.style.length) result = result.filter(f => filters.style.includes(f.style));
+    if (filters.season.length) result = result.filter(f => f.seasons?.some(s => filters.season.includes(s)));
+    if (filters.condition.length) result = result.filter(f => f.conditions?.some(c => filters.condition.includes(c)));
+    if (boxFilter === "inBox") result = result.filter(f => boxData[f.id]?.inBox);
+    if (boxFilter === "needToTie") result = result.filter(f => !boxData[f.id]?.inBox);
+    if (searchTerm.trim()) {
+      const q = searchTerm.toLowerCase();
+      result = result.filter(f =>
+        f.name.toLowerCase().includes(q) ||
+        f.hatch.toLowerCase().includes(q) ||
+        f.hook?.toLowerCase().includes(q) ||
+        Object.values(f.materials || {}).some(m => m.toLowerCase().includes(q))
+      );
+    }
+    if (sortBy === "hatch") {
+      result = [...result].sort((a, b) => a.hatch.localeCompare(b.hatch) || a.name.localeCompare(b.name));
+    } else if (sortBy === "style") {
+      result = [...result].sort((a, b) => a.style.localeCompare(b.style) || a.name.localeCompare(b.name));
+    } else if (sortBy === "name") {
+      result = [...result].sort((a, b) => a.name.localeCompare(b.name));
+    }
+    return result;
+  }, [flies, filters, searchTerm, sortBy, boxFilter, boxData]);
+
+  const toggleFilter = (category, value) => {
+    setFilters(prev => {
+      const arr = prev[category];
+      return { ...prev, [category]: arr.includes(value) ? arr.filter(v => v !== value) : [...arr, value] };
+    });
+  };
+
+  const clearFilters = () => {
+    setFilters({ hatch: [], style: [], season: [], condition: [] });
+    setBoxFilter("all");
+    setSearchTerm("");
+  };
+
+  const activeFilterCount = Object.values(filters).flat().length + (searchTerm ? 1 : 0) + (boxFilter !== "all" ? 1 : 0);
+
+  const deleteFly = async (id) => {
+    const updated = flies.filter(f => f.id !== id);
+    await saveFlies(updated);
+    setExpandedFly(null);
+  };
+
+  const resetToDefaults = async () => {
+    if (confirm("This will reset all flies back to the original patterns and clear your box inventory. Continue?")) {
+      await saveFlies(INITIAL_FLIES);
+      await saveBoxData({});
+    }
+  };
+
+  if (loading) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", background: "#1a1f16", color: "#a8b89a", fontFamily: "'EB Garamond', Georgia, serif" }}>
+        <p style={{ fontSize: 18, letterSpacing: 1 }}>Loading your fly box...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{
+      minHeight: "100vh",
+      background: "#1a1f16",
+      color: "#d4dcc8",
+      fontFamily: "'EB Garamond', Georgia, serif",
+    }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap');
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #3a4230; border-radius: 3px; }
+        .filter-btn {
+          padding: 6px 14px; border-radius: 20px; border: 1px solid #3a4230;
+          background: transparent; color: #8a9a7c; cursor: pointer; font-size: 13px;
+          font-family: 'DM Sans', sans-serif; transition: all 0.2s; white-space: nowrap;
+        }
+        .filter-btn:hover { border-color: #7fb069; color: #7fb069; }
+        .filter-btn.active { background: #2d4a3e; border-color: #7fb069; color: #c8e6c0; }
+        .fly-card {
+          background: #222a1e; border: 1px solid #2e3628; border-radius: 12px;
+          cursor: pointer; transition: all 0.25s ease; position: relative; overflow: hidden;
+        }
+        .fly-card:hover { border-color: #4a5a3e; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+        .material-row { display: flex; gap: 8px; padding: 4px 0; border-bottom: 1px solid #2e362833; }
+        .material-row:last-child { border-bottom: none; }
+        .tag { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-family: 'DM Sans', sans-serif; }
+        input, select, textarea {
+          background: #2a3224; border: 1px solid #3a4230; color: #d4dcc8; border-radius: 8px;
+          padding: 8px 12px; font-size: 14px; font-family: 'DM Sans', sans-serif; width: 100%;
+        }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: #7fb069; }
+        .action-btn {
+          padding: 8px 18px; border-radius: 8px; border: none; cursor: pointer;
+          font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; transition: all 0.2s;
+        }
+        .ref-link {
+          color: #7fb069; text-decoration: none; font-family: 'DM Sans', sans-serif;
+          font-size: 13px; display: inline-flex; align-items: center; gap: 4px;
+        }
+        .ref-link:hover { color: #a8e090; text-decoration: underline; }
+        .stat-number { font-size: 28px; font-weight: 700; color: #7fb069; line-height: 1; }
+        .stat-label { font-size: 11px; color: #6a7a5c; font-family: 'DM Sans', sans-serif; text-transform: uppercase; letter-spacing: 1px; }
+      `}</style>
+
+      {/* Header */}
+      <header style={{
+        padding: "32px 24px 20px",
+        borderBottom: "1px solid #2e3628",
+        background: "linear-gradient(180deg, #222a1e 0%, #1a1f16 100%)"
+      }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+            <div>
+              <h1 style={{ fontSize: 32, fontWeight: 600, color: "#e8f0dc", letterSpacing: -0.5, lineHeight: 1.1 }}>
+                Fly Box
+              </h1>
+              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#6a7a5c", marginTop: 4 }}>
+                {flies.length} patterns loaded
+              </p>
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={() => { setEditingFly(null); setShowAddForm(true); }}
+                className="action-btn" style={{ background: "#7fb069", color: "#1a1f16" }}>
+                + Add Fly
+              </button>
+              <button onClick={resetToDefaults}
+                className="action-btn" style={{ background: "#2a3224", color: "#8a9a7c" }}>
+                Reset
+              </button>
+            </div>
+          </div>
+
+          {/* Quick Stats */}
+          <div style={{ display: "flex", gap: 20, marginTop: 20, flexWrap: "wrap", alignItems: "center" }}>
+            {ALL_HATCHES.map(h => (
+              <div key={h} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span className="stat-number" style={{ color: HATCH_COLORS[h].accent }}>
+                  {flies.filter(f => f.hatch === h).length}
+                </span>
+                <span className="stat-label">{h}</span>
+              </div>
+            ))}
+            <div style={{ width: 1, height: 32, background: "#3a4230", margin: "0 4px" }} />
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span className="stat-number" style={{ color: "#d4a44c" }}>
+                {boxStats.inBox}
+              </span>
+              <span className="stat-label">In Box</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span className="stat-number" style={{ color: "#6b8fbd" }}>
+                {boxStats.totalQty}
+              </span>
+              <span className="stat-label">Total Flies</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Filters */}
+      <div style={{ padding: "16px 24px", borderBottom: "1px solid #2e3628", background: "#1e241a" }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+          {/* Search */}
+          <div style={{ position: "relative", marginBottom: 14 }}>
+            <input
+              type="text"
+              placeholder="Search flies, materials, hooks..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              style={{ paddingLeft: 36 }}
+            />
+            <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#6a7a5c", fontSize: 14 }}>
+              {"🔍"}
+            </span>
+          </div>
+
+          {/* Filter Groups */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <FilterRow label="Hatch" options={ALL_HATCHES} active={filters.hatch} onToggle={v => toggleFilter("hatch", v)} />
+            <FilterRow label="Style" options={ALL_STYLES} active={filters.style} onToggle={v => toggleFilter("style", v)} />
+            <FilterRow label="Season" options={ALL_SEASONS} active={filters.season} onToggle={v => toggleFilter("season", v)} />
+            <FilterRow label="Water" options={ALL_CONDITIONS} active={filters.condition} onToggle={v => toggleFilter("condition", v)} />
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+              <span style={{
+                fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "#6a7a5c",
+                width: 50, flexShrink: 0, textTransform: "uppercase", letterSpacing: 1
+              }}>Box</span>
+              {[
+                { key: "all", label: "All Patterns" },
+                { key: "inBox", label: "In My Box" },
+                { key: "needToTie", label: "Need to Tie" }
+              ].map(opt => (
+                <button key={opt.key}
+                  className={`filter-btn ${boxFilter === opt.key ? "active" : ""}`}
+                  onClick={() => setBoxFilter(opt.key)}
+                  style={boxFilter === opt.key && opt.key === "inBox" ? { background: "#3d3a1e", borderColor: "#d4a44c", color: "#f0ddb8" } :
+                         boxFilter === opt.key && opt.key === "needToTie" ? { background: "#3a1e2d", borderColor: "#bd6b8f", color: "#f0b8d0" } : {}}>
+                  {opt.label}
+                  {opt.key === "inBox" && ` (${boxStats.inBox})`}
+                  {opt.key === "needToTie" && ` (${boxStats.total - boxStats.inBox})`}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {activeFilterCount > 0 && (
+            <div style={{ marginTop: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#6a7a5c" }}>
+                Showing {filteredFlies.length} of {flies.length} patterns
+              </span>
+              <button onClick={clearFilters} style={{
+                background: "none", border: "none", color: "#7fb069", cursor: "pointer",
+                fontFamily: "'DM Sans', sans-serif", fontSize: 13
+              }}>
+                Clear all filters
+              </button>
+            </div>
+          )}
+
+          {/* Sort & View */}
+          <div style={{ display: "flex", gap: 12, marginTop: 12, alignItems: "center" }}>
+            <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#6a7a5c" }}>Sort:</span>
+            {["hatch", "style", "name"].map(s => (
+              <button key={s} onClick={() => setSortBy(s)}
+                className={`filter-btn ${sortBy === s ? "active" : ""}`}
+                style={{ padding: "4px 12px", fontSize: 12 }}>
+                {s.charAt(0).toUpperCase() + s.slice(1)}
+              </button>
+            ))}
+            <div style={{ flex: 1 }} />
+            <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#6a7a5c" }}>View:</span>
+            <button onClick={() => setViewMode("grid")}
+              className={`filter-btn ${viewMode === "grid" ? "active" : ""}`}
+              style={{ padding: "4px 10px", fontSize: 12 }}>Grid</button>
+            <button onClick={() => setViewMode("list")}
+              className={`filter-btn ${viewMode === "list" ? "active" : ""}`}
+              style={{ padding: "4px 10px", fontSize: 12 }}>List</button>
+          </div>
+        </div>
+      </div>
+
+      {/* Fly Cards */}
+      <main style={{ padding: "20px 24px 60px", maxWidth: 1200, margin: "0 auto" }} ref={scrollRef}>
+        {viewMode === "grid" ? (
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+            gap: 16
+          }}>
+            {filteredFlies.map(fly => (
+              <FlyCard key={fly.id} fly={fly} expanded={expandedFly === fly.id}
+                onToggle={() => setExpandedFly(expandedFly === fly.id ? null : fly.id)}
+                onEdit={() => { setEditingFly(fly); setShowAddForm(true); }}
+                onDelete={() => deleteFly(fly.id)}
+                boxEntry={boxData[fly.id]}
+                onToggleBox={() => toggleInBox(fly.id)}
+                onUpdateBox={(details) => updateBoxDetails(fly.id, details)}
+              />
+            ))}
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {filteredFlies.map(fly => (
+              <FlyListRow key={fly.id} fly={fly} expanded={expandedFly === fly.id}
+                onToggle={() => setExpandedFly(expandedFly === fly.id ? null : fly.id)}
+                onEdit={() => { setEditingFly(fly); setShowAddForm(true); }}
+                onDelete={() => deleteFly(fly.id)}
+                boxEntry={boxData[fly.id]}
+                onToggleBox={() => toggleInBox(fly.id)}
+                onUpdateBox={(details) => updateBoxDetails(fly.id, details)}
+              />
+            ))}
+          </div>
+        )}
+        {filteredFlies.length === 0 && (
+          <div style={{ textAlign: "center", padding: 60, color: "#6a7a5c" }}>
+            <p style={{ fontSize: 18 }}>No flies match your filters</p>
+            <button onClick={clearFilters} style={{
+              marginTop: 12, background: "none", border: "1px solid #3a4230", color: "#7fb069",
+              padding: "8px 20px", borderRadius: 8, cursor: "pointer", fontFamily: "'DM Sans', sans-serif"
+            }}>Clear filters</button>
+          </div>
+        )}
+      </main>
+
+      {/* Add/Edit Modal */}
+      {showAddForm && (
+        <AddEditModal
+          fly={editingFly}
+          onSave={async (flyData) => {
+            let updated;
+            if (editingFly) {
+              updated = flies.map(f => f.id === editingFly.id ? { ...f, ...flyData } : f);
+            } else {
+              updated = [...flies, { ...flyData, id: `custom-${Date.now()}` }];
+            }
+            await saveFlies(updated);
+            setShowAddForm(false);
+            setEditingFly(null);
+          }}
+          onClose={() => { setShowAddForm(false); setEditingFly(null); }}
+        />
+      )}
+    </div>
+  );
+}
+
+function FilterRow({ label, options, active, onToggle }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+      <span style={{
+        fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "#6a7a5c",
+        width: 50, flexShrink: 0, textTransform: "uppercase", letterSpacing: 1
+      }}>{label}</span>
+      {options.map(o => (
+        <button key={o} className={`filter-btn ${active.includes(o) ? "active" : ""}`}
+          onClick={() => onToggle(o)}>{o}</button>
+      ))}
+    </div>
+  );
+}
+
+function FlyCard({ fly, expanded, onToggle, onEdit, onDelete, boxEntry, onToggleBox, onUpdateBox }) {
+  const hc = HATCH_COLORS[fly.hatch] || HATCH_COLORS.BWO;
+  const inBox = boxEntry?.inBox;
+  return (
+    <div className="fly-card" onClick={onToggle}
+      style={inBox ? { borderColor: "#4a5a2e", boxShadow: "inset 0 0 0 1px #4a5a2e33" } : {}}>
+      <div style={{ padding: "16px 18px" }}>
+        {/* Top line */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <span className="tag" style={{ background: hc.bg, color: hc.text, border: `1px solid ${hc.accent}44` }}>
+              {fly.hatch}
+            </span>
+            <span className="tag" style={{ background: "#2a3224", color: "#8a9a7c" }}>
+              {STYLE_ICONS[fly.style] || ""} {fly.style}
+            </span>
+          </div>
+          {/* Box toggle */}
+          <button
+            onClick={e => { e.stopPropagation(); onToggleBox(); }}
+            style={{
+              background: inBox ? "#3d4a1e" : "transparent",
+              border: inBox ? "1px solid #7fb069" : "1px solid #3a4230",
+              borderRadius: 6, padding: "3px 10px", cursor: "pointer",
+              fontFamily: "'DM Sans', sans-serif", fontSize: 11, fontWeight: 500,
+              color: inBox ? "#c8e6c0" : "#6a7a5c", transition: "all 0.2s",
+              display: "flex", alignItems: "center", gap: 4, flexShrink: 0
+            }}
+            title={inBox ? "Remove from box" : "Add to box"}
+          >
+            {inBox ? "In Box" : "+ Box"}
+            {inBox && boxEntry.qty > 0 && (
+              <span style={{
+                background: "#7fb069", color: "#1a1f16", borderRadius: 10,
+                padding: "0 6px", fontSize: 10, fontWeight: 700, marginLeft: 2
+              }}>{boxEntry.qty}</span>
+            )}
+          </button>
+        </div>
+        {/* Name */}
+        <h3 style={{ fontSize: 19, fontWeight: 600, color: "#e8f0dc", marginBottom: 6, lineHeight: 1.2 }}>
+          {fly.name}
+        </h3>
+        {/* Quick info */}
+        <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#6a7a5c", display: "flex", gap: 12, flexWrap: "wrap" }}>
+          <span>Hook: {fly.hook}</span>
+          <span>Sizes: {fly.sizes}</span>
+          {fly.coreSizes && <span>Core: {fly.coreSizes}</span>}
+        </div>
+        {/* Box sizes if present */}
+        {inBox && boxEntry.sizes?.length > 0 && (
+          <div style={{ marginTop: 6, fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "#7fb069" }}>
+            Tied in: {boxEntry.sizes.join(", ")}
+          </div>
+        )}
+        {/* Tags */}
+        <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 10 }}>
+          {fly.seasons?.map(s => (
+            <span key={s} className="tag" style={{ background: "#1a2818", color: "#7a9a6a", fontSize: 10 }}>{s}</span>
+          ))}
+          {fly.conditions?.map(c => (
+            <span key={c} className="tag" style={{ background: "#1a2028", color: "#6a8a9a", fontSize: 10 }}>{c}</span>
+          ))}
+        </div>
+      </div>
+
+      {/* Expanded details */}
+      {expanded && (
+        <div style={{ padding: "0 18px 16px", borderTop: "1px solid #2e3628" }} onClick={e => e.stopPropagation()}>
+          {/* Box management section */}
+          {inBox && (
+            <BoxDetails boxEntry={boxEntry} fly={fly} onUpdateBox={onUpdateBox} />
+          )}
+          {fly.notes && (
+            <p style={{ fontSize: 14, color: "#a8b89a", fontStyle: "italic", margin: "12px 0", lineHeight: 1.5 }}>
+              {fly.notes}
+            </p>
+          )}
+          {/* Colors */}
+          {fly.colors?.length > 0 && (
+            <div style={{ marginBottom: 12 }}>
+              <h4 style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "#6a7a5c", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Colors</h4>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                {fly.colors.map(c => (
+                  <span key={c} className="tag" style={{ background: "#2a3224", color: "#a8b89a" }}>{c}</span>
+                ))}
+              </div>
+            </div>
+          )}
+          {/* Materials */}
+          <div style={{ marginBottom: 12 }}>
+            <h4 style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "#6a7a5c", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Materials</h4>
+            {Object.entries(fly.materials || {}).map(([k, v]) => (
+              <div key={k} className="material-row">
+                <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#6a7a5c", minWidth: 90, flexShrink: 0 }}>{k}</span>
+                <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#c8d8b8" }}>{v}</span>
+              </div>
+            ))}
+          </div>
+          {/* Tying References */}
+          {fly.tyingRefs?.length > 0 && (
+            <div style={{ marginBottom: 12 }}>
+              <h4 style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "#6a7a5c", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Tying References</h4>
+              {fly.tyingRefs.map((ref, i) => (
+                <a key={i} href={ref.url} target="_blank" rel="noopener noreferrer" className="ref-link" style={{ display: "block", marginBottom: 4 }}>
+                  ▶ {ref.label}
+                </a>
+              ))}
+            </div>
+          )}
+          {/* Actions */}
+          <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
+            <button onClick={onEdit} className="action-btn" style={{ background: "#2d4a3e", color: "#7fb069" }}>Edit</button>
+            <button onClick={() => { if (confirm(`Delete "${fly.name}"?`)) onDelete(); }}
+              className="action-btn" style={{ background: "#4a2d2d", color: "#c47a5a" }}>Delete</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FlyListRow({ fly, expanded, onToggle, onEdit, onDelete, boxEntry, onToggleBox, onUpdateBox }) {
+  const hc = HATCH_COLORS[fly.hatch] || HATCH_COLORS.BWO;
+  const inBox = boxEntry?.inBox;
+  return (
+    <div className="fly-card" onClick={onToggle}
+      style={{ borderRadius: 8, ...(inBox ? { borderColor: "#4a5a2e" } : {}) }}>
+      <div style={{ padding: "12px 18px", display: "flex", alignItems: "center", gap: 14 }}>
+        <button
+          onClick={e => { e.stopPropagation(); onToggleBox(); }}
+          style={{
+            width: 22, height: 22, borderRadius: 4, flexShrink: 0, cursor: "pointer",
+            background: inBox ? "#3d4a1e" : "transparent",
+            border: inBox ? "2px solid #7fb069" : "2px solid #3a4230",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            color: "#7fb069", fontSize: 14, fontWeight: 700, transition: "all 0.2s"
+          }}
+          title={inBox ? "Remove from box" : "Add to box"}
+        >{inBox ? "+" : ""}</button>
+        <span className="tag" style={{ background: hc.bg, color: hc.text, border: `1px solid ${hc.accent}44`, flexShrink: 0 }}>
+          {fly.hatch}
+        </span>
+        <span style={{ flex: 1, fontSize: 16, fontWeight: 500, color: "#e8f0dc" }}>{fly.name}</span>
+        {inBox && boxEntry.qty > 0 && (
+          <span style={{
+            fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "#7fb069",
+            background: "#2d3a1e", padding: "2px 8px", borderRadius: 10, flexShrink: 0
+          }}>qty: {boxEntry.qty}</span>
+        )}
+        <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#6a7a5c", flexShrink: 0 }}>
+          {STYLE_ICONS[fly.style]} {fly.style}
+        </span>
+        <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#6a7a5c", flexShrink: 0, minWidth: 80 }}>
+          {fly.hook}
+        </span>
+        <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#6a7a5c", flexShrink: 0 }}>
+          {fly.sizes}
+        </span>
+      </div>
+      {expanded && (
+        <div style={{ padding: "0 18px 14px", borderTop: "1px solid #2e3628" }} onClick={e => e.stopPropagation()}>
+          {inBox && <BoxDetails boxEntry={boxEntry} fly={fly} onUpdateBox={onUpdateBox} />}
+          {fly.notes && <p style={{ fontSize: 14, color: "#a8b89a", fontStyle: "italic", margin: "10px 0" }}>{fly.notes}</p>}
+          <div style={{ display: "flex", gap: 24, flexWrap: "wrap", marginTop: 8 }}>
+            <div style={{ flex: 1, minWidth: 200 }}>
+              <h4 style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "#6a7a5c", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Materials</h4>
+              {Object.entries(fly.materials || {}).map(([k, v]) => (
+                <div key={k} className="material-row">
+                  <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#6a7a5c", minWidth: 90 }}>{k}</span>
+                  <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#c8d8b8" }}>{v}</span>
+                </div>
+              ))}
+            </div>
+            <div style={{ minWidth: 180 }}>
+              <h4 style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "#6a7a5c", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>When to Fish</h4>
+              <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 8 }}>
+                {fly.seasons?.map(s => <span key={s} className="tag" style={{ background: "#1a2818", color: "#7a9a6a", fontSize: 10 }}>{s}</span>)}
+              </div>
+              <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 12 }}>
+                {fly.conditions?.map(c => <span key={c} className="tag" style={{ background: "#1a2028", color: "#6a8a9a", fontSize: 10 }}>{c}</span>)}
+              </div>
+              {fly.tyingRefs?.map((ref, i) => (
+                <a key={i} href={ref.url} target="_blank" rel="noopener noreferrer" className="ref-link" style={{ display: "block", marginBottom: 4 }}>
+                  ▶ {ref.label}
+                </a>
+              ))}
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+            <button onClick={onEdit} className="action-btn" style={{ background: "#2d4a3e", color: "#7fb069" }}>Edit</button>
+            <button onClick={() => { if (confirm(`Delete "${fly.name}"?`)) onDelete(); }}
+              className="action-btn" style={{ background: "#4a2d2d", color: "#c47a5a" }}>Delete</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function BoxDetails({ boxEntry, fly, onUpdateBox }) {
+  // Parse the size range from the fly to offer toggleable sizes
+  const availableSizes = useMemo(() => {
+    const range = fly.sizes?.match(/(\d+)/g);
+    if (!range || range.length < 2) return [];
+    const start = parseInt(range[0]);
+    const end = parseInt(range[range.length - 1]);
+    const sizes = [];
+    // Hook sizes go up by 2s typically
+    for (let s = start; s <= end; s += 2) {
+      sizes.push(String(s));
+    }
+    // Also add odd sizes if the range includes them (some go 14-20 meaning 14,16,18,20)
+    return sizes;
+  }, [fly.sizes]);
+
+  const toggleSize = (size) => {
+    const current = boxEntry.sizes || [];
+    const updated = current.includes(size) ? current.filter(s => s !== size) : [...current, size].sort((a, b) => parseInt(a) - parseInt(b));
+    onUpdateBox({ sizes: updated });
+  };
+
+  return (
+    <div style={{
+      margin: "12px 0", padding: 12, borderRadius: 8,
+      background: "#1e2a16", border: "1px solid #3a4a2e"
+    }}>
+      <h4 style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "#7fb069", textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>
+        My Box Inventory
+      </h4>
+      <div style={{ display: "flex", gap: 16, flexWrap: "wrap", alignItems: "flex-start" }}>
+        {/* Quantity */}
+        <div>
+          <label style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "#6a7a5c", display: "block", marginBottom: 4 }}>Quantity</label>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <button
+              onClick={() => onUpdateBox({ qty: Math.max(0, (boxEntry.qty || 1) - 1) })}
+              style={{
+                width: 28, height: 28, borderRadius: 6, border: "1px solid #3a4230",
+                background: "#2a3224", color: "#8a9a7c", cursor: "pointer", fontSize: 16,
+                display: "flex", alignItems: "center", justifyContent: "center"
+              }}>-</button>
+            <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 18, fontWeight: 600, color: "#e8f0dc", minWidth: 28, textAlign: "center" }}>
+              {boxEntry.qty || 0}
+            </span>
+            <button
+              onClick={() => onUpdateBox({ qty: (boxEntry.qty || 0) + 1 })}
+              style={{
+                width: 28, height: 28, borderRadius: 6, border: "1px solid #3a4230",
+                background: "#2a3224", color: "#8a9a7c", cursor: "pointer", fontSize: 16,
+                display: "flex", alignItems: "center", justifyContent: "center"
+              }}>+</button>
+          </div>
+        </div>
+        {/* Sizes I have tied */}
+        {availableSizes.length > 0 && (
+          <div style={{ flex: 1 }}>
+            <label style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "#6a7a5c", display: "block", marginBottom: 4 }}>Sizes tied</label>
+            <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+              {availableSizes.map(size => {
+                const active = (boxEntry.sizes || []).includes(size);
+                return (
+                  <button key={size} onClick={() => toggleSize(size)} style={{
+                    padding: "3px 10px", borderRadius: 14, fontSize: 12,
+                    fontFamily: "'DM Sans', sans-serif", cursor: "pointer", transition: "all 0.15s",
+                    background: active ? "#3d4a1e" : "transparent",
+                    border: active ? "1px solid #7fb069" : "1px solid #3a4230",
+                    color: active ? "#c8e6c0" : "#6a7a5c"
+                  }}>{size}</button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function AddEditModal({ fly, onSave, onClose }) {
+  const [form, setForm] = useState({
+    name: fly?.name || "",
+    hatch: fly?.hatch || "BWO",
+    style: fly?.style || "Dry Fly",
+    hook: fly?.hook || "",
+    sizes: fly?.sizes || "",
+    coreSizes: fly?.coreSizes || "",
+    colors: fly?.colors?.join(", ") || "",
+    materialsText: fly?.materials ? Object.entries(fly.materials).map(([k, v]) => `${k}: ${v}`).join("\n") : "",
+    refsText: fly?.tyingRefs ? fly.tyingRefs.map(r => `${r.label} | ${r.url}`).join("\n") : "",
+    seasons: fly?.seasons || [],
+    conditions: fly?.conditions || [],
+    notes: fly?.notes || ""
+  });
+
+  const update = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
+  const toggleArr = (field, value) => {
+    setForm(prev => ({
+      ...prev,
+      [field]: prev[field].includes(value) ? prev[field].filter(v => v !== value) : [...prev[field], value]
+    }));
+  };
+
+  const handleSave = () => {
+    if (!form.name.trim()) { alert("Please enter a fly name"); return; }
+    const materials = {};
+    form.materialsText.split("\n").filter(Boolean).forEach(line => {
+      const idx = line.indexOf(":");
+      if (idx > 0) materials[line.slice(0, idx).trim()] = line.slice(idx + 1).trim();
+    });
+    const tyingRefs = form.refsText.split("\n").filter(Boolean).map(line => {
+      const parts = line.split("|");
+      return { label: parts[0]?.trim() || "Reference", url: parts[1]?.trim() || "" };
+    }).filter(r => r.url);
+
+    onSave({
+      name: form.name.trim(),
+      hatch: form.hatch,
+      style: form.style,
+      hook: form.hook.trim(),
+      sizes: form.sizes.trim(),
+      coreSizes: form.coreSizes.trim(),
+      colors: form.colors.split(",").map(c => c.trim()).filter(Boolean),
+      materials,
+      tyingRefs,
+      seasons: form.seasons,
+      conditions: form.conditions,
+      notes: form.notes.trim()
+    });
+  };
+
+  return (
+    <div style={{
+      position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex",
+      alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 20
+    }} onClick={onClose}>
+      <div style={{
+        background: "#222a1e", borderRadius: 16, border: "1px solid #3a4230",
+        maxWidth: 560, width: "100%", maxHeight: "90vh", overflowY: "auto", padding: 28
+      }} onClick={e => e.stopPropagation()}>
+        <h2 style={{ fontSize: 22, color: "#e8f0dc", marginBottom: 20 }}>
+          {fly ? "Edit Pattern" : "Add New Pattern"}
+        </h2>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <div>
+            <label style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#6a7a5c", display: "block", marginBottom: 4 }}>Fly Name *</label>
+            <input value={form.name} onChange={e => update("name", e.target.value)} placeholder="e.g. Parachute Adams" />
+          </div>
+          <div style={{ display: "flex", gap: 12 }}>
+            <div style={{ flex: 1 }}>
+              <label style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#6a7a5c", display: "block", marginBottom: 4 }}>Hatch</label>
+              <select value={form.hatch} onChange={e => update("hatch", e.target.value)}>
+                {ALL_HATCHES.map(h => <option key={h} value={h}>{h}</option>)}
+              </select>
+            </div>
+            <div style={{ flex: 1 }}>
+              <label style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#6a7a5c", display: "block", marginBottom: 4 }}>Style</label>
+              <select value={form.style} onChange={e => update("style", e.target.value)}>
+                {ALL_STYLES.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 12 }}>
+            <div style={{ flex: 1 }}>
+              <label style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#6a7a5c", display: "block", marginBottom: 4 }}>Hook</label>
+              <input value={form.hook} onChange={e => update("hook", e.target.value)} placeholder="e.g. TMC 100" />
+            </div>
+            <div style={{ flex: 1 }}>
+              <label style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#6a7a5c", display: "block", marginBottom: 4 }}>Size Range</label>
+              <input value={form.sizes} onChange={e => update("sizes", e.target.value)} placeholder="e.g. 14-20" />
+            </div>
+            <div style={{ flex: 1 }}>
+              <label style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#6a7a5c", display: "block", marginBottom: 4 }}>Core Sizes</label>
+              <input value={form.coreSizes} onChange={e => update("coreSizes", e.target.value)} placeholder="e.g. 16-18" />
+            </div>
+          </div>
+          <div>
+            <label style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#6a7a5c", display: "block", marginBottom: 4 }}>Colors (comma separated)</label>
+            <input value={form.colors} onChange={e => update("colors", e.target.value)} placeholder="Olive, Dark olive, Gray" />
+          </div>
+          <div>
+            <label style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#6a7a5c", display: "block", marginBottom: 4 }}>Materials (one per line: Label: Material)</label>
+            <textarea rows={5} value={form.materialsText} onChange={e => update("materialsText", e.target.value)}
+              placeholder={"Tail: Microfibbets\nBody: Olive dubbing\nWing: CDC"} />
+          </div>
+          <div>
+            <label style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#6a7a5c", display: "block", marginBottom: 4 }}>Tying References (one per line: Label | URL)</label>
+            <textarea rows={3} value={form.refsText} onChange={e => update("refsText", e.target.value)}
+              placeholder={"Charlie Craven | https://youtube.com/..."} />
+          </div>
+          <div>
+            <label style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#6a7a5c", display: "block", marginBottom: 6 }}>Seasons</label>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {ALL_SEASONS.map(s => (
+                <button key={s} className={`filter-btn ${form.seasons.includes(s) ? "active" : ""}`}
+                  onClick={() => toggleArr("seasons", s)}>{s}</button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#6a7a5c", display: "block", marginBottom: 6 }}>Water Conditions</label>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {ALL_CONDITIONS.map(c => (
+                <button key={c} className={`filter-btn ${form.conditions.includes(c) ? "active" : ""}`}
+                  onClick={() => toggleArr("conditions", c)}>{c}</button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#6a7a5c", display: "block", marginBottom: 4 }}>Notes</label>
+            <textarea rows={2} value={form.notes} onChange={e => update("notes", e.target.value)}
+              placeholder="When/how to fish this pattern..." />
+          </div>
+        </div>
+
+        <div style={{ display: "flex", gap: 10, marginTop: 22, justifyContent: "flex-end" }}>
+          <button onClick={onClose} className="action-btn" style={{ background: "#2a3224", color: "#8a9a7c" }}>Cancel</button>
+          <button onClick={handleSave} className="action-btn" style={{ background: "#7fb069", color: "#1a1f16" }}>
+            {fly ? "Save Changes" : "Add Pattern"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(React.createElement(FlyDatabase));
+  </script>
+</body>
+</html>
